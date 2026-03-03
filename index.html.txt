@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B CONNECT | Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, query, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// レイさんのFirebase Configを適用済み
+const firebaseConfig = {
+apiKey: "AIzaSyC1xkarYzHQ282BwGyZbH7QDuZTRSqMWUw",
+authDomain: "b-connect-app-cc9f3.firebaseapp.com",
+projectId: "b-connect-app-cc9f3",
+storageBucket: "b-connect-app-cc9f3.firebasestorage.app",
+messagingSenderId: "174604250755",
+appId: "1:174604250755:web:03cd89a203c1916fdd75b6"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// リアルタイムで通報を監視する設定
+const q = query(collection(db, "reports"));
+onSnapshot(q, (snapshot) => {
+const tbody = document.getElementById('report-list');
+tbody.innerHTML = '';
+if (snapshot.empty) {
+tbody.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-600">現在、通報はありません</td></tr>';
+return;
+}
+snapshot.forEach((doc) => {
+const data = doc.data();
+const tr = `<tr class="border-b border-gray-900">
+<td class="py-4">${data.userId || 'unknown'}</td>
+<td><span class="text-red-500 font-bold">${data.count || 0}回</span></td>
+<td>${data.reason || '理由なし'}</td>
+<td><button class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-xs" onclick="confirmBan('${data.userId}')">BAN</button></td>
+</tr>`;
+tbody.innerHTML += tr;
+});
+});
+</script>
+<style>
+body { background-color: #000; color: #fff; font-family: 'Helvetica Neue', Arial, sans-serif; }
+.card { background: #111; border: 1px solid #222; border-radius: 12px; padding: 24px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+textarea { resize: none; }
+</style>
+</head>
+<body class="p-8">
+<div class="max-w-6xl mx-auto">
+<header class="mb-10 flex justify-between items-center">
+<h1 class="text-3xl font-extrabold text-blue-500 tracking-tight">B CONNECT <span class="text-white text-lg font-normal ml-2">Admin Panel</span></h1>
+<div class="text-sm text-gray-400">Project ID: b-connect-app-cc9f3</div>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-2 card">
+<h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+<span class="text-2xl">🚨</span> リアルタイム通報・監視
+</h2>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="border-b border-gray-800 text-gray-500 text-xs uppercase tracking-wider">
+<th class="pb-3">対象ユーザー</th>
+<th class="pb-3">通報数</th>
+<th class="pb-3">最新の理由</th>
+<th class="pb-3">アクション</th>
+</tr>
+</thead>
+<tbody id="report-list" class="text-sm">
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="card">
+<h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+<span class="text-2xl">💬</span> AI返信リライター
+</h2>
+<p class="text-xs text-gray-400 mb-4">運営の正体を隠しつつ、丁寧なAI口調で返信を作成します。</p>
+
+<div class="space-y-4">
+<div>
+<label class="block text-xs text-gray-500 mb-1">あなたのラフな回答：</label>
+<textarea id="rawReply" class="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-blue-500 outline-none h-28" placeholder="例：おっけー、次のアプデで実装しとくわ！"></textarea>
+</div>
+
+<button onclick="rewriteAI()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold transition-all">
+AI口調にリライト
+</button>
+
+<div id="aiReplyBox" class="hidden animate-pulse">
+<div class="bg-blue-950/30 border border-blue-500/30 p-4 rounded-lg">
+<label class="block text-xs text-blue-400 mb-2 font-bold">✨ 生成された回答：</label>
+<p id="aiText" class="text-sm italic text-blue-100"></p>
+<button class="w-full mt-4 bg-white text-black text-xs py-2 rounded font-bold hover:bg-gray-200">
+この内容でユーザーに送信
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+function rewriteAI() {
+const raw = document.getElementById('rawReply').value;
+if(!raw) return alert("回答を入力してください");
+
+document.getElementById('aiReplyBox').classList.remove('hidden');
+// デモ用のリライトロジック
+document.getElementById('aiText').innerText =
+"「貴重なご意見ありがとうございます。運営チームにて検討の結果、次回のアップデートにて反映させていただく運びとなりました。引き続き、より良いコミュニティ作りに向けて尽力して参りますので、今後ともB CONNECTをよろしくお願いいたします。」";
+}
+
+window.confirmBan = (userId) => {
+if(confirm(`ユーザー ${userId} を永久BANしますか？\nこの操作は元に戻せません。`)) {
+alert(`${userId} のアクセスを遮断しました。`);
+}
+};
+</script>
+</body>
+</html>
